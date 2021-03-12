@@ -10,6 +10,9 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Net;
 using System.Text;
+using JWT.Algorithms;
+using JWT.Builder;
+using System.Collections.Generic;
 
 namespace AzFunctionsJwtAuth
 {
@@ -67,8 +70,26 @@ namespace AzFunctionsJwtAuth
 
     public class GoogleTokenHelper
     {
+        private static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
+        {
+            // Unix timestamp is seconds past epoch
+            System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+            dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
+            return dtDateTime;
+        }
+
         public static async Task<GoogleTokenResult> TokenIsValid(string token)
         {
+            var claims = new JwtBuilder()
+                    .WithAlgorithm(new HMACSHA256Algorithm())
+                    .WithSecret("DztHe0MiWFqIpXBBsUBLgZ50")
+                    .Decode<IDictionary<string, object>>(token);
+
+            var unixExpTime = Convert.ToDouble(claims["exp"]);
+
+            var expire = UnixTimeStampToDateTime(unixExpTime);
+
+
 
             string baseUrl = "https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=";
 
