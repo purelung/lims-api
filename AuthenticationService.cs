@@ -7,6 +7,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using System.IO;
+using ZeeReportingApi.Data;
 using Newtonsoft.Json;
 using System.Net;
 using System.Text;
@@ -47,6 +48,13 @@ namespace AzFunctionsJwtAuth
                 return new UnauthorizedResult();
             }
 
+            var users = UsersRepo.get(tokenResult.Email);
+
+            if (users.Count == 0)
+            {
+                return new UnauthorizedResult();
+            }
+
             var creds = new Credentials() { User = tokenResult.Email, Password = "" };
 
             var jwt = new { token = _tokenIssuer.IssueTokenForUser(creds) };
@@ -80,61 +88,35 @@ namespace AzFunctionsJwtAuth
 
         public static async Task<GoogleTokenResult> TokenIsValid(string token)
         {
-            var claims = new JwtBuilder()
-                    .WithAlgorithm(new HMACSHA256Algorithm())
-                    .WithSecret("DztHe0MiWFqIpXBBsUBLgZ50")
-                    .Decode<IDictionary<string, object>>(token);
-
-            var unixExpTime = Convert.ToDouble(claims["exp"]);
-
-            var expire = UnixTimeStampToDateTime(unixExpTime);
-
-
-
-            string baseUrl = "https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=";
-
             try
             {
+                var claims = new JwtBuilder()
+                        .WithAlgorithm(new HMACSHA256Algorithm())
+                        .WithSecret("DztHe0MiWFqIpXBBsUBLgZ50")
+                        .Decode<IDictionary<string, object>>(token);
 
-                using (HttpClient client = new HttpClient())
+                var unixExpTime = Convert.ToDouble(claims["exp"]);
+
+                var expire = UnixTimeStampToDateTime(unixExpTime);
+
+                if (expire > DateTime.Now)
                 {
-                    using (HttpResponseMessage res = await client.GetAsync(baseUrl + token))
-                    {
-                        using (HttpContent content = res.Content)
-                        {
-                            var data = await content.ReadAsStringAsync();
-
-                            if (data != null)
-                            {
-
-                                Console.WriteLine("data------------{0}", data);
-
-
-                                if (data.Contains("Invalid Value"))
-                                {
-                                    return new GoogleTokenResult(false);
-                                }
-
-                                return new GoogleTokenResult(true, "get_email_from_data");
-                            }
-                            else
-                            {
-                                Console.WriteLine("NO Data----------");
-                                return new GoogleTokenResult(false);
-                            }
-                        }
-                    }
+                    return new GoogleTokenResult(true, claims["email"].ToString());
                 }
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine("Exception Hit------------");
-                Console.WriteLine(exception);
+
+                Console.WriteLine("token expired");
+
                 return new GoogleTokenResult(false);
             }
-
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception Hit------------");
+                Console.WriteLine(ex);
+                return new GoogleTokenResult(false);
+            }
         }
     }
+
 
     public class Credentials
     {
