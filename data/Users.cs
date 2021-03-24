@@ -27,8 +27,6 @@ namespace ZeeReportingApi.Data
         public string Name { get; set; }
         public string Email { get; set; }
         public string Mobile { get; set; }
-        public bool AcceptedInvite { get; set; }
-        public DateTime InviteSent { get; set; }
         public Role Role { get; set; }
     }
 
@@ -60,9 +58,7 @@ namespace ZeeReportingApi.Data
                                     Name = reader.GetString(0),
                                     Email = reader.GetString(1),
                                     Mobile = reader.GetString(2),
-                                    AcceptedInvite = reader.GetBoolean(3),
-                                    InviteSent = reader.GetDateTime(4),
-                                    Role = Enum.Parse<Role>(reader.GetString(5))
+                                    Role = Enum.Parse<Role>(reader.GetString(3))
                                 });
                             }
                         }
