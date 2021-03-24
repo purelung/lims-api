@@ -46,7 +46,7 @@ namespace ZeeReportingApi.Data
                 {
                     connection.Open();
 
-                    String sql = string.Format(@"select u.Name, u.Email, u.Mobile, u.AcceptedInvite, u.InviteSent, r.RoleDescription as Role from [app].[User] as u join app.UserRoles as r on u.UserRoleID = r.id
+                    String sql = string.Format(@"select u.Name, u.Email, u.Mobile, r.RoleDescription as Role from [app].[User] as u join app.UserRoles as r on u.UserRoleID = r.id
                                 where u.Email = '{0}'", email);
 
                     using (SqlCommand command = new SqlCommand(sql, connection))
