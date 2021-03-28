@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using JWT;
 using JWT.Algorithms;
 using JWT.Serializers;
+using ZeeReportingApi;
 
 namespace AzFunctionsJwtAuth
 {

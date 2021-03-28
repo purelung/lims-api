@@ -48,18 +48,20 @@ namespace AzFunctionsJwtAuth
                 return new UnauthorizedResult();
             }
 
-            var users = UsersRepo.get(tokenResult.Email);
+            var users = UsersRepo.GetUser(tokenResult.Email);
 
             if (users.Count == 0)
             {
                 return new UnauthorizedResult();
             }
 
+            var user = users[0];
+
             var creds = new Credentials() { User = tokenResult.Email, Password = "" };
 
-            var jwt = new { token = _tokenIssuer.IssueTokenForUser(creds) };
+            var userData = new { token = _tokenIssuer.IssueTokenForUser(creds), franchiseId = user.FranchiseId };
 
-            return new JsonResult(jwt);
+            return new JsonResult(userData);
         }
     }
 

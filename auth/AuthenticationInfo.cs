@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using JWT.Algorithms;
 using JWT.Builder;
 using Microsoft.AspNetCore.Http;
+using ZeeReportingApi;
 
 namespace AzFunctionsJwtAuth
 {
