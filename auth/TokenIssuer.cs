@@ -4,7 +4,7 @@ using JWT.Algorithms;
 using JWT.Serializers;
 using ZeeReportingApi;
 
-namespace AzFunctionsJwtAuth
+namespace ZeeReportingApi
 {
     /// <summary>
     ///     Wrapper class for encapsulating the token issuance logic.

@@ -7,117 +7,85 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
-using AzFunctionsJwtAuth;
 using System.Data.SqlClient;
 using System.Text;
 using System.Collections.Generic;
+using ZeeReportingApi.Model;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace ZeeReportingApi.Data
 {
-    public enum Role
-    {
-        SuperUser = 1,
-        Owner = 2,
-        SalonOwner = 3,
-        User = 4
-    }
-
-    public class User
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Email { get; set; }
-        public string Mobile { get; set; }
-        public int FranchiseId { get; set; }
-        public Role Role { get; set; }
-    }
-
     public class UsersRepo
     {
-        private static readonly string BASE_QUERY = "select id, Name, Email, Mobile, FranchiseID, UserRoleID as Role from [app].[User]";
-
-        public static bool AddUser(User user)
+        private readonly ODSContext _context;
+        public UsersRepo(ODSContext context)
         {
-            bool succuess = false;
-
-            string query = String.Format(@"INSERT INTO app.[User] (Name, Email, Mobile, Password, FranchiseID, UserRoleID)
-                VALUES ('{0}', '{1}', '{2}', '', {3}, {4});", user.Name, user.Email, user.Mobile, user.FranchiseId, (int)user.Role);
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(Constants.DB_CONN_STRING))
-                {
-                    connection.Open();
-
-                    using (SqlCommand command = new SqlCommand(query, connection))
-                    {
-                        int rowsAffected = command.ExecuteNonQuery();
-
-                        if (rowsAffected != 1)
-                        {
-                            return false;
-                        }
-                    }
-                }
-            }
-            catch (SqlException e)
-            {
-                Console.WriteLine(e.ToString());
-                return false;
-            }
-
-            return true;
+            _context = context;
         }
 
-        private static List<User> getUsersBase(string query)
+        public int AddUser(User user)
         {
-            var users = new List<User> { };
-
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(Constants.DB_CONN_STRING))
-                {
-                    connection.Open();
-
-                    using (SqlCommand command = new SqlCommand(query, connection))
-                    {
-                        using (SqlDataReader reader = command.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                users.Add(new User()
-                                {
-                                    Id = reader.GetInt32(0),
-                                    Name = reader.GetString(1),
-                                    Email = reader.GetString(2),
-                                    Mobile = reader.GetString(3),
-                                    FranchiseId = reader.GetInt32(4),
-                                    Role = (Role)reader.GetInt32(5)
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-            catch (SqlException e)
-            {
-                Console.WriteLine(e.ToString());
-            }
-
-            return users;
+            var newUser = _context.User.Add(user);
+            _context.SaveChanges();
+            return newUser.Entity.Id;
         }
 
-
-        public static List<User> GetUser(string email)
+        public void UpdateUser(User user)
         {
-            return getUsersBase(BASE_QUERY + string.Format(" where Email = '{0}'", email));
+            _context.User.Update(user);
+            _context.SaveChanges();
         }
 
-        public static List<User> GetUsers()
+        public void AddUserSalons(List<UserXSalon> userSalons)
         {
-            return getUsersBase(BASE_QUERY);
+            _context.UserXSalon.AddRange(userSalons);
+            _context.SaveChanges();
+        }
+
+        public void RemoveUserSalons(int userId, List<int> salonIds)
+        {
+            var records = _context.UserXSalon.Where(u => u.UserId == userId && salonIds.Contains(u.SalonId)).ToList();
+
+            if (records.Count > 0)
+                _context.UserXSalon.RemoveRange(records);
+
+            _context.SaveChanges();
+        }
+
+        public void UpdateUserSalons(List<UserXSalon> newUserSalons)
+        {
+            var userId = newUserSalons.Select(u => u.UserId).FirstOrDefault();
+            var oldUserSalonIds = _context.UserXSalon.Where(u => u.UserId == userId).Select(u => u.SalonId).ToList();
+            var newUserSalonIds = newUserSalons.Select(u => u.SalonId).ToList();
+
+            var salonIdsToAdd = newUserSalonIds.Except(oldUserSalonIds).ToList();
+
+            if (salonIdsToAdd.Count() > 0)
+            {
+                AddUserSalons(salonIdsToAdd.Select(sid => new UserXSalon() { UserId = userId, SalonId = sid }).ToList());
+            }
+
+            var salonIdsToRemove = oldUserSalonIds.Except(newUserSalonIds).ToList();
+
+            if (salonIdsToRemove.Count() > 0)
+            {
+                RemoveUserSalons(userId, salonIdsToRemove);
+            }
+        }
+
+        public List<User> GetUser(string email)
+        {
+            return _context.User.Where(u => u.Email == email).ToList();
+        }
+        public List<User> GetUser(int id)
+        {
+            return _context.User.Where(u => u.Id == id).ToList();
+        }
+
+        public List<User> GetUsers(int franchiseId)
+        {
+            return _context.User.Where(u => u.FranchiseId == franchiseId).ToList();
         }
     }
 }

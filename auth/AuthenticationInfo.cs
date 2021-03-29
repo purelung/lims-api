@@ -5,7 +5,7 @@ using JWT.Builder;
 using Microsoft.AspNetCore.Http;
 using ZeeReportingApi;
 
-namespace AzFunctionsJwtAuth
+namespace ZeeReportingApi
 {
     /// <summary>
     ///     Wrapper class for encapsulating claims parsing.

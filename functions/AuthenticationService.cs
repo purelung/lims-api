@@ -14,8 +14,9 @@ using System.Text;
 using JWT.Algorithms;
 using JWT.Builder;
 using System.Collections.Generic;
+using ZeeReportingApi.Model;
 
-namespace AzFunctionsJwtAuth
+namespace ZeeReportingApi
 {
     /// <summary>
     ///     Service class for performing authentication.
@@ -23,14 +24,16 @@ namespace AzFunctionsJwtAuth
     public class AuthenticationService
     {
         private readonly TokenIssuer _tokenIssuer;
+        private UsersRepo _usersRepo;
 
         /// <summary>
         ///     Injection constructor.
         /// </summary>
         /// <param name="tokenIssuer">DI injected token issuer singleton.</param>
-        public AuthenticationService(TokenIssuer tokenIssuer)
+        public AuthenticationService(TokenIssuer tokenIssuer, ODSContext context)
         {
             _tokenIssuer = tokenIssuer;
+            _usersRepo = new UsersRepo(context);
         }
 
         [FunctionName("Authenticate")]
@@ -48,7 +51,7 @@ namespace AzFunctionsJwtAuth
                 return new UnauthorizedResult();
             }
 
-            var users = UsersRepo.GetUser(tokenResult.Email);
+            var users = _usersRepo.GetUser(tokenResult.Email);
 
             if (users.Count == 0)
             {

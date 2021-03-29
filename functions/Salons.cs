@@ -6,14 +6,21 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using AzFunctionsJwtAuth;
 using ZeeReportingApi.Data;
+using ZeeReportingApi.Model;
 
 namespace ZeeReportingApi
 
 {
     public class Salons : AuthorizedServiceBase
     {
+        SalonsRepo _salonsRepo;
+
+        public Salons(ODSContext context)
+        {
+            _salonsRepo = new SalonsRepo(context);
+        }
+
         [FunctionName("Salons")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "salons")] HttpRequest req,
@@ -33,7 +40,7 @@ namespace ZeeReportingApi
                 return new BadRequestResult();
             }
 
-            var salons = SalonsRepo.GetSalons(franchiseId, log);
+            var salons = _salonsRepo.GetSalons(franchiseId);
 
             return new JsonResult(salons);
         }

@@ -7,16 +7,15 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
-using AzFunctionsJwtAuth;
 using System.Data.SqlClient;
 using System.Data;
 using System.Text;
 using System.Collections.Generic;
+using System.Linq;
+using ZeeReportingApi.Model;
 
 namespace ZeeReportingApi.Data
 {
-
-
     public class Salon
     {
         public string Id { get; set; }
@@ -26,9 +25,37 @@ namespace ZeeReportingApi.Data
         }
     }
 
+    public class UserWithSalons
+    {
+        public User user { get; set; }
+        public List<Salon> availableSalons { get; set; }
+        public List<Salon> selectedSalons { get; set; }
+    }
+
     public class SalonsRepo
     {
-        public static List<Salon> GetSalons(int franchiseId, ILogger log = null)
+
+        private readonly ODSContext _context;
+        public SalonsRepo(ODSContext context)
+        {
+            _context = context;
+        }
+        public void SaveUserSalons(List<UserXSalon> userSalons)
+        {
+            _context.UserXSalon.AddRange(userSalons);
+            _context.SaveChanges();
+        }
+
+        public UserWithSalons GetUserWithSalons(User user)
+        {
+            var salonIds = _context.UserXSalon.Where(us => us.UserId == user.Id).Select(us => us.SalonId.ToString()).ToList();
+            var allSalons = GetSalons(user.FranchiseId);
+            var selectedSalons = allSalons.Where(s => salonIds.Contains(s.Id)).ToList();
+
+            return new UserWithSalons() { user = user, selectedSalons = selectedSalons, availableSalons = allSalons.Except(selectedSalons).ToList() };
+        }
+
+        public List<Salon> GetSalons(int franchiseId)
         {
             var salons = new List<Salon> { };
 
@@ -66,5 +93,4 @@ namespace ZeeReportingApi.Data
             return salons;
         }
     }
-
 }

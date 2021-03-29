@@ -1,0 +1,1 @@
+dotnet ef dbcontext scaffold "Server=tcp:midnight-data.database.windows.net,1433;Initial Catalog=ODS;Persist Security Info=False;User ID=midnightData;Password=KRCxb24jLgzat279TgtYKPf4q;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30" Microsoft.EntityFrameworkCore.SqlServer -o Model --schema app

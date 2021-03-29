@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs.Host;
 
-namespace AzFunctionsJwtAuth
+namespace ZeeReportingApi
 {
     /// <summary>
     ///     Base class for authenticated service which checks the incoming JWT token.
