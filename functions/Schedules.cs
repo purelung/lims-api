@@ -8,19 +8,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using ZeeReportingApi.Data;
 using ZeeReportingApi.Model;
+using System.Data;
 
 namespace ZeeReportingApi
 
 {
     public class Schedules : AuthorizedServiceBase
     {
-        SchedulesRepo _schedulesRepo;
-
-        public Schedules(ODSContext context)
-        {
-            _schedulesRepo = new SchedulesRepo(context);
-        }
-
         [FunctionName("Schedules")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "schedules")] HttpRequest req,
@@ -30,7 +24,7 @@ namespace ZeeReportingApi
 
             var auth = new AuthenticationInfo(req);
 
-            var rankings = _schedulesRepo.GetSchedules(auth.Username);
+            var rankings = DataUtility.CallSproc<string>("[reports].[schedule]", "@LoggedInUserEmail", auth.Username, SqlDbType.NVarChar);
 
             return new JsonResult(rankings);
         }
