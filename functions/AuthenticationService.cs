@@ -62,7 +62,7 @@ namespace ZeeReportingApi
 
             var creds = new Credentials() { User = tokenResult.Email, Password = "" };
 
-            var userData = new { token = _tokenIssuer.IssueTokenForUser(creds), franchiseId = user.FranchiseId };
+            var userData = new { token = _tokenIssuer.IssueTokenForUser(creds), franchiseId = user.FranchiseId, userRoleId = user.UserRoleId };
 
             return new JsonResult(userData);
         }
