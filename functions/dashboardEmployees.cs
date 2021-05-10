@@ -13,20 +13,20 @@ using System.Data;
 namespace ZeeReportingApi
 
 {
-    public class Metrics : AuthorizedServiceBase
+    public class dashEmployees : AuthorizedServiceBase
     {
-        [FunctionName("dashboardMetrics")]
+        [FunctionName("dashboardEmployees")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "dashboardMetrics")] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "dashboardEmployees")] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("Get Dashboard Metrics called");
+            log.LogInformation("Get Dashboard Employees called");
 
             var auth = new AuthenticationInfo(req);
 
-            var dashMetrics = DataUtility.CallSproc<string>("reports.dashboardMetrics", "@LoggedInUserEmail", auth.Username, SqlDbType.NVarChar);
+            var dashEployees = DataUtility.CallSproc<string>("reports.dashboardEmployees", "@LoggedInUserEmail", auth.Username, SqlDbType.NVarChar);
 
-            return new JsonResult(dashMetrics);
+            return new JsonResult(dashEployees);
         }
     }
 }
