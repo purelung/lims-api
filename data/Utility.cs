@@ -17,13 +17,73 @@ using ZeeReportingApi.Model;
 namespace ZeeReportingApi.Data
 {
 
+
+    public struct SprocParam
+    {
+        public string Name { get; set; }
+        public Object Value { get; set; }
+        public SqlDbType DbType { get; set; }
+    }
+
     public class DataUtility
     {
+        public static readonly string[] DefaultParams = { "@LoggedInUserEmail", "@StartDate", "@EndDate" };
 
+        public static List<SprocParam> GetSprocParams(string[] paramNames, string userName)
+        {
+            var sprocParams = new List<SprocParam>();
 
-        public static List<Dictionary<string, object>> CallSproc<T>(string sprocName, string paramName, T param, SqlDbType paramType)
+            var now = DateTime.Now;
+            var oneWeekAgo = now.AddDays(-7);
+
+            paramNames.ToList().ForEach(paramName =>
+            {
+                switch (paramName)
+                {
+                    case "@LoggedInUserEmail":
+                        sprocParams.Add(new SprocParam()
+                        {
+                            Name = paramName,
+                            Value = userName,
+                            DbType = SqlDbType.NVarChar
+                        });
+                        break;
+                    case "@StartDate":
+
+                        sprocParams.Add(new SprocParam()
+                        {
+                            Name = paramName,
+                            Value = now,
+                            DbType = SqlDbType.DateTime
+                        });
+                        break;
+                    case "@EndDate":
+
+                        sprocParams.Add(new SprocParam()
+                        {
+                            Name = paramName,
+                            Value = oneWeekAgo,
+                            DbType = SqlDbType.DateTime
+                        });
+                        break;
+                    default:
+                        break;
+                }
+            });
+
+            return sprocParams;
+        }
+
+        public static List<Dictionary<string, object>> CallSproc(string sprocName, string userName)
+        {
+            return CallSproc(sprocName, userName, DefaultParams);
+        }
+
+        public static List<Dictionary<string, object>> CallSproc(string sprocName, string userName,
+        string[] sprocParamNames)
         {
             var items = new List<Dictionary<string, object>>();
+            var sprocParams = GetSprocParams(sprocParamNames, userName);
 
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
 
@@ -36,7 +96,11 @@ namespace ZeeReportingApi.Data
                     using (SqlCommand command = new SqlCommand(sprocName, connection))
                     {
                         command.CommandType = CommandType.StoredProcedure;
-                        command.Parameters.Add(paramName, paramType).Value = param;
+                        sprocParams.ForEach(p =>
+                        {
+                            command.Parameters.Add(p.Name, p.DbType).Value = p.Value;
+                        });
+
                         using (SqlDataReader reader = command.ExecuteReader())
                         {
                             var columns = Enumerable.Range(0, reader.FieldCount).Select(reader.GetName).ToList();

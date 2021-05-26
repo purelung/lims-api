@@ -7,8 +7,8 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using ZeeReportingApi.Data;
-using ZeeReportingApi.Model;
 using System.Data;
+using System.Collections.Generic;
 
 namespace ZeeReportingApi
 
@@ -24,7 +24,7 @@ namespace ZeeReportingApi
 
             var auth = new AuthenticationInfo(req);
 
-            var dashEployees = DataUtility.CallSproc<string>("reports.dashboardEmployees", "@LoggedInUserEmail", auth.Username, SqlDbType.NVarChar);
+            var dashEployees = DataUtility.CallSproc("reports.dashboardEmployees", auth.Username);
 
             return new JsonResult(dashEployees);
         }
