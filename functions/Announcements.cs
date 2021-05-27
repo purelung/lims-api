@@ -13,18 +13,18 @@ using System.Data;
 namespace ZeeReportingApi
 
 {
-    public class SalonRankings : AuthorizedServiceBase
+    public class Announcements : AuthorizedServiceBase
     {
-        [FunctionName("SalonRankings")]
+        [FunctionName("Announcements")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "salon-rankings")] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "announcements")] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("Get Salon Rankings called");
+            log.LogInformation("Get Announcements called");
 
             var auth = new AuthenticationInfo(req);
 
-            var rankings = DataUtility.CallSproc("[reports].[salonranking]", auth.Username, useDate: false);
+            var rankings = DataUtility.CallSproc("[app].[sel_Announcemnts]", new List<SprocParam>());
 
             return new JsonResult(rankings);
         }

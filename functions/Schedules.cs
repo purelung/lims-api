@@ -24,7 +24,7 @@ namespace ZeeReportingApi
 
             var auth = new AuthenticationInfo(req);
 
-            var rankings = DataUtility.CallSproc("[reports].[schedule]", auth.Username, new[] { "@LoggedInUserEmail" });
+            var rankings = DataUtility.CallSproc("[reports].[schedule]", auth.Username, useDate: false);
 
             return new JsonResult(rankings);
         }

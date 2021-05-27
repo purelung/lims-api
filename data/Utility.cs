@@ -18,53 +18,86 @@ namespace ZeeReportingApi.Data
 {
 
 
-    public struct SprocParam
+    public class SprocParam
     {
         public string Name { get; set; }
         public Object Value { get; set; }
         public SqlDbType DbType { get; set; }
+
+        public override string ToString()
+        {
+            var value = "";
+            if (Value.GetType() == typeof(DateTime))
+            {
+                value = ((DateTime)Value).ToShortDateString();
+            }
+            else
+            {
+                value = Value.ToString();
+            }
+            return Name + ":" + value;
+        }
     }
+
+
 
     public class DataUtility
     {
-        public static readonly string[] DefaultParams = { "@LoggedInUserEmail", "@StartDate", "@EndDate" };
+        public static readonly string[] CachedSprocs = { "reports.dashboardMetrics" };
 
-        public static List<SprocParam> GetSprocParams(string[] paramNames, string userName)
+        public static Dictionary<string, List<Dictionary<string, object>>> SprocResultsCache = new Dictionary<string, List<Dictionary<string, object>>>();
+
+        public static SprocParam GetStartDate(DateTime value)
+        {
+            return new SprocParam()
+            {
+                Name = "@StartDate",
+                Value = value,
+                DbType = SqlDbType.DateTime
+            };
+        }
+
+        public static SprocParam GetEndDate(DateTime value)
+        {
+            return new SprocParam()
+            {
+                Name = "@EndDate",
+                Value = value,
+                DbType = SqlDbType.DateTime
+            };
+        }
+
+        public static SprocParam GetUser(string value)
+        {
+            return new SprocParam()
+            {
+                Name = "@LoggedInUserEmail",
+                Value = value,
+                DbType = SqlDbType.NVarChar
+            };
+        }
+
+        public static List<SprocParam> GetDefaultSprocParams(string userName, bool useDate)
         {
             var sprocParams = new List<SprocParam>();
 
             var now = DateTime.Now;
             var oneWeekAgo = now.AddDays(-7);
 
-            paramNames.ToList().ForEach(paramName =>
+            var defaultParams = useDate ? new[] { "@LoggedInUserEmail", "@StartDate", "@EndDate" } : new[] { "@LoggedInUserEmail" };
+
+            defaultParams.ToList().ForEach(paramName =>
             {
                 switch (paramName)
                 {
                     case "@LoggedInUserEmail":
-                        sprocParams.Add(new SprocParam()
-                        {
-                            Name = paramName,
-                            Value = userName,
-                            DbType = SqlDbType.NVarChar
-                        });
+                        sprocParams.Add(GetUser(userName));
                         break;
                     case "@StartDate":
-
-                        sprocParams.Add(new SprocParam()
-                        {
-                            Name = paramName,
-                            Value = now,
-                            DbType = SqlDbType.DateTime
-                        });
+                        sprocParams.Add(GetStartDate(oneWeekAgo));
                         break;
                     case "@EndDate":
-
-                        sprocParams.Add(new SprocParam()
-                        {
-                            Name = paramName,
-                            Value = oneWeekAgo,
-                            DbType = SqlDbType.DateTime
-                        });
+                        sprocParams.Add(GetEndDate(now));
                         break;
                     default:
                         break;
@@ -74,16 +107,29 @@ namespace ZeeReportingApi.Data
             return sprocParams;
         }
 
-        public static List<Dictionary<string, object>> CallSproc(string sprocName, string userName)
+        public static string GetSprocId(string sprocName, List<SprocParam> sprocParams)
         {
-            return CallSproc(sprocName, userName, DefaultParams);
+            return sprocName + sprocParams.Aggregate("",
+                (current, next) => current.ToString() + "-" + next.ToString());
         }
 
-        public static List<Dictionary<string, object>> CallSproc(string sprocName, string userName,
-        string[] sprocParamNames)
+        public static List<Dictionary<string, object>> CallSproc(string sprocName, string userName, bool useDate = true)
+        {
+            return CallSproc(sprocName, GetDefaultSprocParams(userName, useDate));
+        }
+
+        public static List<Dictionary<string, object>> CallSproc(string sprocName,
+        List<SprocParam> sprocParams)
         {
             var items = new List<Dictionary<string, object>>();
-            var sprocParams = GetSprocParams(sprocParamNames, userName);
+
+            var sprocId = GetSprocId(sprocName, sprocParams);
+
+            if (CachedSprocs.Contains(sprocName) && SprocResultsCache.ContainsKey(sprocId))
+            {
+                Console.WriteLine("Retrieving sproc results from cache: " + sprocId);
+                return SprocResultsCache[sprocId];
+            }
 
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
 
@@ -120,6 +166,12 @@ namespace ZeeReportingApi.Data
             catch (SqlException e)
             {
                 Console.WriteLine(e.ToString());
+            }
+
+            if (CachedSprocs.Contains(sprocName))
+            {
+                Console.WriteLine("Adding sproc results to cache: " + sprocId);
+                SprocResultsCache.Add(sprocId, items);
             }
 
             return items;
