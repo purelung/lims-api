@@ -24,7 +24,27 @@ namespace ZeeReportingApi
 
             var auth = new AuthenticationInfo(req);
 
-            var rankings = DataUtility.CallSproc("[reports].[salonranking]", auth.Username, useDate: false);
+            var startDate = new DateTime();
+            var endDate = new DateTime();
+
+            try
+            {
+                startDate = DateTime.Parse(req.Query["startDate"]);
+                endDate = DateTime.Parse(req.Query["endDate"]);
+            }
+            catch (Exception ex)
+            {
+                return new BadRequestResult();
+            }
+
+            var sprocParams = new List<SprocParam>() {
+                DataUtility.GetUser(auth.Username),
+                DataUtility.GetStartDate(startDate),
+                DataUtility.GetEndDate(endDate)
+            };
+
+
+            var rankings = DataUtility.CallSproc("[reports].[salonranking]", sprocParams);
 
             return new JsonResult(rankings);
         }
