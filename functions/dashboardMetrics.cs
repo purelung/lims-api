@@ -24,7 +24,26 @@ namespace ZeeReportingApi
 
             var auth = new AuthenticationInfo(req);
 
-            var dashMetrics = DataUtility.CallSproc("reports.dashboardMetrics", auth.Username);
+            var startDate = new DateTime();
+            var endDate = new DateTime();
+
+            try
+            {
+                startDate = DateTime.Parse(req.Query["startDate"]);
+                endDate = DateTime.Parse(req.Query["endDate"]);
+            }
+            catch (Exception ex)
+            {
+                return new BadRequestResult();
+            }
+
+            var sprocParams = new List<SprocParam>() {
+                DataUtility.GetUser(auth.Username),
+                DataUtility.GetStartDate(startDate),
+                DataUtility.GetEndDate(endDate)
+            };
+
+            var dashMetrics = DataUtility.CallSproc("reports.dashboardSalonMetrics", sprocParams);
 
             return new JsonResult(dashMetrics);
         }
