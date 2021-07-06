@@ -25,6 +25,20 @@ namespace ZeeReportingApi.Data
         }
     }
 
+    public class SalonWithGroup
+    {
+
+        public int Id { get; set; }
+        public string Name
+        {
+            get; set;
+        }
+        public string Group
+        {
+            get; set;
+        }
+    }
+
     public class UserWithSalons
     {
         public User user { get; set; }
@@ -91,6 +105,45 @@ namespace ZeeReportingApi.Data
             }
 
             return salons;
+        }
+
+        public List<SalonWithGroup> GetSalonsWithGroups(string loggedInUserEmail)
+        {
+            var salonGroups = new List<SalonWithGroup> { };
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(Constants.DB_CONN_STRING))
+                {
+                    connection.Open();
+
+                    using (SqlCommand command = new SqlCommand("[reports].[SalonGroups]", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.Add("@LoggedInUserEmail", SqlDbType.NVarChar).Value = loggedInUserEmail;
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                salonGroups.Add(new SalonWithGroup()
+                                {
+                                    Id = reader.GetInt32(0),
+                                    Name = reader.GetString(1),
+                                    Group = reader.GetString(2),
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (SqlException e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+
+            return salonGroups;
         }
     }
 }

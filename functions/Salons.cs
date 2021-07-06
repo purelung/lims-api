@@ -44,5 +44,19 @@ namespace ZeeReportingApi
 
             return new JsonResult(salons);
         }
+
+        [FunctionName("SalonsWithGroups")]
+        public async Task<IActionResult> GetSalonsWithGroups(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "salonsWithGroups")] HttpRequest req,
+    ILogger log)
+        {
+            log.LogInformation("Get Salons With Groups called");
+
+            var auth = new AuthenticationInfo(req);
+
+            var salonGroups = _salonsRepo.GetSalonsWithGroups(auth.Username);
+
+            return new JsonResult(new { salonGroups });
+        }
     }
 }
