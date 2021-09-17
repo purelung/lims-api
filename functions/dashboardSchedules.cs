@@ -24,7 +24,11 @@ namespace ZeeReportingApi
 
             var auth = new AuthenticationInfo(req);
 
-            var dashSchedules = DataUtility.CallSproc("reports.dashboardSchedules", auth.Username);
+            var sprocParams = new List<SprocParam>() {
+                DataUtility.GetUser(auth.Username),
+            };
+
+            var dashSchedules = DataUtility.CallSproc("reports.dashboardPredictiveSchedules", sprocParams);
 
             return new JsonResult(dashSchedules);
         }
