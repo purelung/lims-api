@@ -67,6 +67,16 @@ namespace ZeeReportingApi.Data
             };
         }
 
+        public static SprocParam GetStoreId(string storeId)
+        {
+            return new SprocParam()
+            {
+                Name = "@StoreID",
+                Value = storeId,
+                DbType = SqlDbType.NVarChar
+            };
+        }
+
         public static SprocParam GetUser(string value)
         {
             return new SprocParam()
